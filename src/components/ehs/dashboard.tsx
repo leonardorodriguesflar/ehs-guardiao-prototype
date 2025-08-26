@@ -50,30 +50,32 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-hero">
       {/* Header */}
-      <Header>
+      <Header className="bg-white/95 backdrop-blur-sm border-b border-white/20 shadow-hero">
         <Container>
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20 py-4">
             <div className="flex items-center space-x-4">
-              <img 
-                src={abbottLogo} 
-                alt="Abbott" 
-                className="h-8 w-16 object-cover rounded"
-              />
+              <div className="p-2 bg-white rounded-xl shadow-card">
+                <img 
+                  src={abbottLogo} 
+                  alt="Abbott" 
+                  className="h-10 w-20 object-contain"
+                />
+              </div>
               <div>
-                <h1 className="font-bold text-lg text-foreground">Guardião Abbott</h1>
-                <p className="text-xs text-muted-foreground">Sistema EHS</p>
+                <h1 className="font-bold text-xl text-primary">Guardião Abbott</h1>
+                <p className="text-sm text-primary/70">Sistema EHS Corporativo</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon">
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
                 <User className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-primary hover:bg-primary/10">
                 <Menu className="h-5 w-5" />
               </Button>
             </div>
@@ -82,39 +84,49 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
       </Header>
 
       <Main>
-        <Container className="py-8">
+        <Container className="py-12">
           {/* Welcome Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Bem-vindo ao Sistema EHS
-            </h2>
-            <p className="text-muted-foreground">
-              Escolha um módulo para começar
-            </p>
+          <div className="mb-12 text-center">
+            <div className="space-y-6">
+              <h2 className="text-4xl font-bold text-white drop-shadow-lg">
+                Bem-vindo ao Sistema EHS
+              </h2>
+              <p className="text-white/90 text-lg max-w-2xl mx-auto leading-relaxed">
+                Mantenha o ambiente de trabalho seguro e saudável. Reporte ocorrências, 
+                realize inspeções e acesse recursos importantes de segurança.
+              </p>
+              <div className="flex justify-center">
+                <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
+                  <p className="text-white/80 text-sm font-medium">
+                    ✅ Sistema Online • Última sincronização: agora
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Alerts */}
-          <div className="bg-gradient-card rounded-xl p-4 mb-8 border border-border/50">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 mb-12 border border-white/30 shadow-hero">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-warning/10 rounded-lg">
-                  <Bell className="h-5 w-5 text-warning" />
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-gradient-to-br from-warning to-warning/80 rounded-xl shadow-card">
+                  <Bell className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-card-foreground">Avisos Importantes</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-lg text-foreground">Avisos Importantes</h3>
+                  <p className="text-muted-foreground">
                     Treinamento obrigatório de segurança - Prazo: 15 dias
                   </p>
                 </div>
               </div>
-              <Badge variant="outline" className="border-warning text-warning">
+              <Badge variant="outline" className="border-warning text-warning font-semibold px-4 py-2">
                 Pendente
               </Badge>
             </div>
           </div>
 
           {/* Module Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             {modules.map((module) => (
               <ModuleCard
                 key={module.id}
@@ -128,22 +140,30 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
           </div>
 
           {/* Quick Stats */}
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-card rounded-lg p-4 border border-border/50">
-              <div className="text-2xl font-bold text-primary">5</div>
-              <div className="text-sm text-muted-foreground">Reportes Ativos</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
+              <div className="text-center space-y-3">
+                <div className="text-3xl font-bold text-primary">5</div>
+                <div className="text-sm font-medium text-muted-foreground">Reportes Ativos</div>
+              </div>
             </div>
-            <div className="bg-gradient-card rounded-lg p-4 border border-border/50">
-              <div className="text-2xl font-bold text-success">12</div>
-              <div className="text-sm text-muted-foreground">Inspeções OK</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
+              <div className="text-center space-y-3">
+                <div className="text-3xl font-bold text-success">12</div>
+                <div className="text-sm font-medium text-muted-foreground">Inspeções OK</div>
+              </div>
             </div>
-            <div className="bg-gradient-card rounded-lg p-4 border border-border/50">
-              <div className="text-2xl font-bold text-warning">3</div>
-              <div className="text-sm text-muted-foreground">Pendências</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
+              <div className="text-center space-y-3">
+                <div className="text-3xl font-bold text-warning">3</div>
+                <div className="text-sm font-medium text-muted-foreground">Pendências</div>
+              </div>
             </div>
-            <div className="bg-gradient-card rounded-lg p-4 border border-border/50">
-              <div className="text-2xl font-bold text-accent">98%</div>
-              <div className="text-sm text-muted-foreground">Conformidade</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
+              <div className="text-center space-y-3">
+                <div className="text-3xl font-bold text-success">98%</div>
+                <div className="text-sm font-medium text-muted-foreground">Conformidade</div>
+              </div>
             </div>
           </div>
         </Container>

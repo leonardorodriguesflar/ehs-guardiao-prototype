@@ -22,31 +22,52 @@ export const ModuleCard = ({
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-300 hover:shadow-elevated hover:-translate-y-1",
-        "bg-gradient-card border-border/50 backdrop-blur-sm",
-        variant === "primary" && "border-primary/20 hover:border-primary/40 hover:shadow-[0_8px_24px_hsl(213_100%_40%/0.15)]",
-        variant === "warning" && "border-warning/20 hover:border-warning/40",
-        variant === "success" && "border-success/20 hover:border-success/40",
+        "group relative overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-hero hover:-translate-y-2 active:scale-98",
+        "bg-white/95 backdrop-blur-sm border border-white/30 shadow-elevated hover:bg-white hover:border-white/50",
+        variant === "primary" && "bg-gradient-primary text-white shadow-hero hover:shadow-elevated border-white/20 hover:border-white/40",
+        variant === "warning" && "border-warning/30 hover:border-warning/50",
+        variant === "success" && "border-success/30 hover:border-success/50",
         className
       )}
       onClick={onClick}
     >
-      <CardContent className="p-6 flex items-center space-x-4">
+      {/* Background decoration with animated gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-all duration-500" />
+      <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 opacity-0 group-hover:opacity-50 blur-xl transition-all duration-700" />
+      
+      <CardContent className="relative z-10 p-8 flex flex-col items-center text-center space-y-6">
         <div className={cn(
-          "p-3 rounded-xl",
-          variant === "default" && "bg-primary/10 text-primary",
-          variant === "primary" && "bg-primary text-primary-foreground",
-          variant === "warning" && "bg-warning text-warning-foreground",
-          variant === "success" && "bg-success text-success-foreground"
+          "flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3",
+          variant === "default" && "bg-primary/10 text-primary group-hover:bg-primary/20",
+          variant === "primary" && "bg-white/20 text-white backdrop-blur-sm",
+          variant === "warning" && "bg-warning/10 text-warning group-hover:bg-warning/20",
+          variant === "success" && "bg-success/10 text-success group-hover:bg-success/20"
         )}>
-          <Icon className="h-6 w-6" />
+          <Icon className="h-8 w-8 transition-all duration-500 group-hover:scale-110" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg text-card-foreground">{title}</h3>
+        
+        <div className="space-y-3">
+          <h3 className={cn(
+            "text-xl font-bold transition-all duration-300 group-hover:scale-105",
+            variant === "primary" ? "text-white" : "text-foreground group-hover:text-primary"
+          )}>
+            {title}
+          </h3>
           {description && (
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            <p className={cn(
+              "text-sm leading-relaxed transition-colors duration-300",
+              variant === "primary" ? "text-white/95" : "text-muted-foreground group-hover:text-foreground"
+            )}>
+              {description}
+            </p>
           )}
         </div>
+        
+        {/* Hover indicator */}
+        <div className={cn(
+          "h-1 w-0 rounded-full transition-all duration-500 group-hover:w-12",
+          variant === "primary" ? "bg-white/50" : "bg-primary"
+        )} />
       </CardContent>
     </Card>
   );
