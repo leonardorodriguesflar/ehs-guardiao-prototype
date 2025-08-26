@@ -1,14 +1,53 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { SplashScreen } from "@/components/ehs/splash-screen";
+import { Dashboard } from "@/components/ehs/dashboard";
+import { ReportForm } from "@/components/ehs/report-form";
+import { InspectionForm } from "@/components/ehs/inspection-form";
+import { MyReports } from "@/components/ehs/my-reports";
+import { Library } from "@/components/ehs/library";
+
+type AppState = "loading" | "dashboard" | "report" | "inspection" | "reports" | "library";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [currentState, setCurrentState] = useState<AppState>("loading");
+
+  const handleLoadingComplete = () => {
+    setCurrentState("dashboard");
+  };
+
+  const handleNavigate = (page: string) => {
+    setCurrentState(page as AppState);
+  };
+
+  const handleBack = () => {
+    setCurrentState("dashboard");
+  };
+
+  if (currentState === "loading") {
+    return <SplashScreen onLoadingComplete={handleLoadingComplete} />;
+  }
+
+  if (currentState === "dashboard") {
+    return <Dashboard onNavigate={handleNavigate} />;
+  }
+
+  if (currentState === "report") {
+    return <ReportForm onBack={handleBack} />;
+  }
+
+  if (currentState === "inspection") {
+    return <InspectionForm onBack={handleBack} />;
+  }
+
+  if (currentState === "reports") {
+    return <MyReports onBack={handleBack} />;
+  }
+
+  if (currentState === "library") {
+    return <Library onBack={handleBack} />;
+  }
+
+  return <Dashboard onNavigate={handleNavigate} />;
 };
 
 export default Index;
