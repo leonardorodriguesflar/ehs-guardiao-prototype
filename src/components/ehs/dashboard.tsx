@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Header, Container, Main } from "@/components/ui/layout";
 import { ModuleCard } from "@/components/ui/module-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { 
   AlertTriangle, 
   ClipboardCheck, 
@@ -18,6 +20,21 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onNavigate }: DashboardProps) => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const modules = [
     {
       id: "report",
@@ -96,9 +113,17 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
                 realize inspeções e acesse recursos importantes de segurança.
               </p>
               <div className="flex justify-center">
-                <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
-                  <p className="text-white/80 text-sm font-medium">
-                    ✅ Sistema Online • Última sincronização: agora
+                <div className={`backdrop-blur-sm rounded-full px-6 py-3 border transition-all ${
+                  isOnline 
+                    ? "bg-success/10 border-success/20" 
+                    : "bg-destructive/10 border-destructive/20"
+                }`}>
+                  <p className={`text-sm font-medium ${
+                    isOnline ? "text-white/90" : "text-white/80"
+                  }`}>
+                    {isOnline ? "✅ Sistema Online" : "⚠️ Sistema Offline"} • Última sincronização: {
+                      isOnline ? "agora" : "indisponível"
+                    }
                   </p>
                 </div>
               </div>
@@ -127,7 +152,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
 
           {/* Module Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            {modules.map((module) => (
+            {modules.map((module, index) => (
               <ModuleCard
                 key={module.id}
                 title={module.title}
@@ -135,34 +160,44 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
                 icon={module.icon}
                 variant={module.variant}
                 onClick={() => onNavigate(module.id)}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 0.2}s` }}
               />
             ))}
           </div>
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
-              <div className="text-center space-y-3">
-                <div className="text-3xl font-bold text-primary">5</div>
-                <div className="text-sm font-medium text-muted-foreground">Reportes Ativos</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105 animate-fade-in cursor-pointer group">
+              <div className="group-hover:animate-bounce-subtle">
+                <div className="text-center space-y-3">
+                  <div className="text-3xl font-bold text-primary">5</div>
+                  <div className="text-sm font-medium text-muted-foreground">Reportes Ativos</div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
-              <div className="text-center space-y-3">
-                <div className="text-3xl font-bold text-success">12</div>
-                <div className="text-sm font-medium text-muted-foreground">Inspeções OK</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105 animate-fade-in cursor-pointer group" style={{ animationDelay: "0.1s" }}>
+              <div className="group-hover:animate-bounce-subtle">
+                <div className="text-center space-y-3">
+                  <div className="text-3xl font-bold text-success">12</div>
+                  <div className="text-sm font-medium text-muted-foreground">Inspeções OK</div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
-              <div className="text-center space-y-3">
-                <div className="text-3xl font-bold text-warning">3</div>
-                <div className="text-sm font-medium text-muted-foreground">Pendências</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105 animate-fade-in cursor-pointer group" style={{ animationDelay: "0.2s" }}>
+              <div className="group-hover:animate-bounce-subtle">
+                <div className="text-center space-y-3">
+                  <div className="text-3xl font-bold text-warning">3</div>
+                  <div className="text-sm font-medium text-muted-foreground">Pendências</div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105">
-              <div className="text-center space-y-3">
-                <div className="text-3xl font-bold text-success">98%</div>
-                <div className="text-sm font-medium text-muted-foreground">Conformidade</div>
+            <div className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-white/20 shadow-hero hover:shadow-elevated transition-all duration-300 hover:scale-105 animate-fade-in cursor-pointer group" style={{ animationDelay: "0.3s" }}>
+              <div className="group-hover:animate-bounce-subtle">
+                <div className="text-center space-y-3">
+                  <div className="text-3xl font-bold text-success">98%</div>
+                  <div className="text-sm font-medium text-muted-foreground">Conformidade</div>
+                </div>
               </div>
             </div>
           </div>

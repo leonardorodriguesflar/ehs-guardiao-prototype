@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
+import { useFormValidation } from "@/hooks/use-form-validation";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { 
   ArrowLeft, 
   Camera, 
@@ -23,13 +26,24 @@ interface ReportFormProps {
 }
 
 export const ReportForm = ({ onBack }: ReportFormProps) => {
-  const [formData, setFormData] = useState({
-    type: "",
-    location: "",
-    description: "",
-    riskLevel: "",
-    date: new Date().toISOString().slice(0, 16)
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedReports, setSavedReports] = useLocalStorage('ehs-reports', []);
+  
+  const { data: formData, errors, touched, updateField, touchField, validateAll, resetForm } = useFormValidation(
+    {
+      type: "",
+      location: "",
+      description: "",
+      riskLevel: "",
+      date: new Date().toISOString().slice(0, 16)
+    },
+    {
+      type: { required: true },
+      location: { required: true, minLength: 3 },
+      description: { required: true, minLength: 10, maxLength: 1000 },
+      date: { required: true }
+    }
+  );
 
   const reportTypes = [
     { value: "incident", label: "Incidente" },
@@ -44,37 +58,54 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
     { value: "high", label: "Alto", color: "bg-destructive" }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.type || !formData.description) {
+    if (!validateAll()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        title: "Formulário inválido",
+        description: "Por favor, corrija os erros antes de enviar.",
         variant: "destructive"
       });
       return;
     }
 
-    // Generate protocol number
-    const protocol = `EHS-${Date.now().toString().slice(-6)}`;
+    setIsSubmitting(true);
     
-    toast({
-      title: "Reporte enviado com sucesso!",
-      description: `Protocolo: ${protocol}`,
-      variant: "default"
-    });
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate protocol number
+      const protocol = `EHS-${Date.now().toString().slice(-6)}`;
+      
+      // Save to local storage
+      const newReport = {
+        ...formData,
+        id: protocol,
+        status: "em-analise",
+        submittedAt: new Date().toISOString()
+      };
+      
+      setSavedReports((prev: any[]) => [newReport, ...prev]);
+      
+      toast({
+        title: "Reporte enviado com sucesso!",
+        description: `Protocolo: ${protocol}`,
+        variant: "default"
+      });
 
-    // Reset form and go back
-    setFormData({
-      type: "",
-      location: "",
-      description: "",
-      riskLevel: "",
-      date: new Date().toISOString().slice(0, 16)
-    });
-    
-    setTimeout(onBack, 2000);
+      resetForm();
+      setTimeout(onBack, 1500);
+    } catch (error) {
+      toast({
+        title: "Erro ao enviar",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -113,10 +144,10 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Select 
-                  value={formData.type} 
-                  onValueChange={(value) => setFormData({...formData, type: value})}
-                >
+                  <Select 
+                    value={formData.type} 
+                    onValueChange={(value) => updateField('type', value)}
+                  >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo de reporte" />
                   </SelectTrigger>
@@ -128,6 +159,9 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                     ))}
                   </SelectContent>
                 </Select>
+                {touched.type && errors.type && (
+                  <p className="text-sm text-destructive animate-fade-in">{errors.type}</p>
+                )}
               </CardContent>
             </Card>
 
@@ -144,8 +178,13 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                   <Input
                     type="datetime-local"
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    onChange={(e) => updateField('date', e.target.value)}
+                    onBlur={() => touchField('date')}
+                    className={touched.date && errors.date ? "border-destructive" : ""}
                   />
+                  {touched.date && errors.date && (
+                    <p className="text-sm text-destructive animate-fade-in">{errors.date}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -160,8 +199,13 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                   <Input
                     placeholder="Ex: Laboratório A, Setor 3"
                     value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    onChange={(e) => updateField('location', e.target.value)}
+                    onBlur={() => touchField('location')}
+                    className={touched.location && errors.location ? "border-destructive" : ""}
                   />
+                  {touched.location && errors.location && (
+                    <p className="text-sm text-destructive animate-fade-in">{errors.location}</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -177,10 +221,17 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                   <Textarea
                     id="description"
                     placeholder="Forneça uma descrição detalhada do evento, incluindo circunstâncias, pessoas envolvidas e possíveis causas..."
-                    className="min-h-24"
+                    className={`min-h-24 ${touched.description && errors.description ? "border-destructive" : ""}`}
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) => updateField('description', e.target.value)}
+                    onBlur={() => touchField('description')}
                   />
+                  {touched.description && errors.description && (
+                    <p className="text-sm text-destructive animate-fade-in">{errors.description}</p>
+                  )}
+                  <div className="text-xs text-muted-foreground">
+                    {formData.description.length}/1000 caracteres
+                  </div>
                 </div>
 
                 {/* Photo attachment */}
@@ -207,8 +258,8 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
                     <button
                       key={level.value}
                       type="button"
-                      onClick={() => setFormData({...formData, riskLevel: level.value})}
-                      className={`relative`}
+                      onClick={() => updateField('riskLevel', level.value)}
+                      className="relative transition-transform hover:scale-105"
                     >
                       <Badge 
                         variant={formData.riskLevel === level.value ? "default" : "outline"}
@@ -227,14 +278,19 @@ export const ReportForm = ({ onBack }: ReportFormProps) => {
             </Card>
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={onBack}>
+            <div className="flex justify-end space-x-4 animate-fade-in">
+              <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-gradient-primary">
+              <EnhancedButton 
+                type="submit" 
+                className="bg-gradient-primary"
+                loading={isSubmitting}
+                loadingText="Enviando..."
+              >
                 <Send className="h-4 w-4 mr-2" />
                 Enviar Relatório
-              </Button>
+              </EnhancedButton>
             </div>
           </form>
         </Container>

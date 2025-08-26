@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { 
   ArrowLeft, 
   ClipboardCheck, 
@@ -23,6 +25,8 @@ interface InspectionFormProps {
 export const InspectionForm = ({ onBack }: InspectionFormProps) => {
   const [selectedInspection, setSelectedInspection] = useState("");
   const [inspectionStarted, setInspectionStarted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedInspections, setSavedInspections] = useLocalStorage('ehs-inspections', []);
   const [responses, setResponses] = useState<Record<string, {
     status: "conforme" | "nao-conforme" | "na";
     comment?: string;
@@ -85,7 +89,7 @@ export const InspectionForm = ({ onBack }: InspectionFormProps) => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const items = inspectionItems[selectedInspection as keyof typeof inspectionItems] || [];
     const totalItems = items.length;
     const answeredItems = Object.keys(responses).length;
@@ -99,15 +103,47 @@ export const InspectionForm = ({ onBack }: InspectionFormProps) => {
       return;
     }
 
-    const protocol = `INS-${Date.now().toString().slice(-6)}`;
+    setIsSubmitting(true);
     
-    toast({
-      title: "Inspeção finalizada com sucesso!",
-      description: `Protocolo: ${protocol}`,
-      variant: "default"
-    });
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const protocol = `INS-${Date.now().toString().slice(-6)}`;
+      const conformeCount = Object.values(responses).filter(r => r.status === "conforme").length;
+      const conformity = Math.round((conformeCount / totalItems) * 100);
+      
+      // Save to local storage
+      const newInspection = {
+        id: protocol,
+        type: selectedInspection,
+        title: inspectionTypes.find(t => t.value === selectedInspection)?.label || "Inspeção",
+        date: new Date().toISOString(),
+        location: "Local da inspeção",
+        status: "concluida",
+        conformity,
+        responses,
+        submittedAt: new Date().toISOString()
+      };
+      
+      setSavedInspections((prev: any[]) => [newInspection, ...prev]);
+      
+      toast({
+        title: "Inspeção finalizada com sucesso!",
+        description: `Protocolo: ${protocol} - Conformidade: ${conformity}%`,
+        variant: "default"
+      });
 
-    setTimeout(onBack, 2000);
+      setTimeout(onBack, 1500);
+    } catch (error) {
+      toast({
+        title: "Erro ao finalizar",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!inspectionStarted) {
@@ -157,13 +193,13 @@ export const InspectionForm = ({ onBack }: InspectionFormProps) => {
                   </SelectContent>
                 </Select>
 
-                <Button 
+                <EnhancedButton 
                   onClick={handleStartInspection}
                   disabled={!selectedInspection}
-                  className="w-full bg-gradient-primary"
+                  className="w-full bg-gradient-primary animate-pulse-glow"
                 >
                   Iniciar Inspeção
-                </Button>
+                </EnhancedButton>
               </CardContent>
             </Card>
           </Container>
@@ -203,7 +239,7 @@ export const InspectionForm = ({ onBack }: InspectionFormProps) => {
       <Main>
         <Container className="py-8 space-y-6">
           {currentItems.map((item, index) => (
-            <Card key={index} className="relative">
+            <Card key={index} className="relative animate-fade-in hover:shadow-elevated transition-all">
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <h3 className="font-semibold text-foreground">{index + 1}. {item}</h3>
@@ -280,14 +316,16 @@ export const InspectionForm = ({ onBack }: InspectionFormProps) => {
             >
               Voltar
             </Button>
-            <Button 
+            <EnhancedButton 
               onClick={handleSubmit}
               className="bg-gradient-primary"
               disabled={Object.keys(responses).length < currentItems.length}
+              loading={isSubmitting}
+              loadingText="Finalizando..."
             >
               <Send className="h-4 w-4 mr-2" />
               Finalizar Inspeção
-            </Button>
+            </EnhancedButton>
           </div>
         </Container>
       </Main>

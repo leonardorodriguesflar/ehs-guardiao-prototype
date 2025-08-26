@@ -1,8 +1,11 @@
+import { useState, useMemo } from "react";
 import { Header, Container, Main } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { 
   ArrowLeft, 
   FileText, 
@@ -10,7 +13,9 @@ import {
   Eye,
   Calendar,
   MapPin,
-  AlertTriangle
+  AlertTriangle,
+  Search,
+  Filter
 } from "lucide-react";
 import abbottLogo from "@/assets/abbott-logo.jpg";
 
@@ -19,6 +24,11 @@ interface MyReportsProps {
 }
 
 export const MyReports = ({ onBack }: MyReportsProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [savedReports] = useLocalStorage('ehs-reports', []);
+  const [savedInspections] = useLocalStorage('ehs-inspections', []);
+  
   const mockReports = [
     {
       id: "EHS-001234",
@@ -124,6 +134,39 @@ export const MyReports = ({ onBack }: MyReportsProps) => {
     });
   };
 
+  // Combine saved and mock data
+  const allReports = useMemo(() => {
+    return [...savedReports, ...mockReports].sort((a, b) => 
+      new Date(b.submittedAt || b.date).getTime() - new Date(a.submittedAt || a.date).getTime()
+    );
+  }, [savedReports]);
+
+  const allInspections = useMemo(() => {
+    return [...savedInspections, ...mockInspections].sort((a, b) => 
+      new Date(b.submittedAt || b.date).getTime() - new Date(a.submittedAt || a.date).getTime()
+    );
+  }, [savedInspections]);
+
+  // Filter data based on search and status
+  const filteredReports = useMemo(() => {
+    return allReports.filter(report => {
+      const matchesSearch = report.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           report.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           report.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = selectedStatus === "all" || report.status === selectedStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [allReports, searchTerm, selectedStatus]);
+
+  const filteredInspections = useMemo(() => {
+    return allInspections.filter(inspection => {
+      const matchesSearch = inspection.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           inspection.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = selectedStatus === "all" || inspection.status === selectedStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [allInspections, searchTerm, selectedStatus]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header>
@@ -149,6 +192,37 @@ export const MyReports = ({ onBack }: MyReportsProps) => {
 
       <Main>
         <Container className="py-8">
+          {/* Search and Filter */}
+          <div className="space-y-4 mb-8 animate-fade-in">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar relatórios e inspeções..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {["all", "pendente", "em-analise", "resolvido", "concluida"].map((status) => (
+                <Button
+                  key={status}
+                  variant={selectedStatus === status ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedStatus(status)}
+                  className="transition-all hover:scale-105"
+                >
+                  {status === "all" ? "Todos" : 
+                   status === "em-analise" ? "Em Análise" :
+                   status === "resolvido" ? "Resolvido" :
+                   status === "concluida" ? "Concluída" :
+                   "Pendente"}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <Tabs defaultValue="reports" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="reports" className="flex items-center space-x-2">
@@ -162,8 +236,19 @@ export const MyReports = ({ onBack }: MyReportsProps) => {
             </TabsList>
 
             <TabsContent value="reports" className="space-y-4">
-              {mockReports.map((report) => (
-                <Card key={report.id} className="hover:shadow-elevated transition-shadow">
+              {filteredReports.length === 0 ? (
+                <Card className="p-8 text-center animate-fade-in">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum reporte encontrado</h3>
+                  <p className="text-muted-foreground">Tente ajustar os filtros ou criar um novo reporte.</p>
+                </Card>
+              ) : (
+                filteredReports.map((report, index) => (
+                <Card 
+                  key={report.id} 
+                  className="hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg flex items-center space-x-2">
@@ -200,12 +285,23 @@ export const MyReports = ({ onBack }: MyReportsProps) => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )))}
             </TabsContent>
 
             <TabsContent value="inspections" className="space-y-4">
-              {mockInspections.map((inspection) => (
-                <Card key={inspection.id} className="hover:shadow-elevated transition-shadow">
+              {filteredInspections.length === 0 ? (
+                <Card className="p-8 text-center animate-fade-in">
+                  <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma inspeção encontrada</h3>
+                  <p className="text-muted-foreground">Tente ajustar os filtros ou realizar uma nova inspeção.</p>
+                </Card>
+              ) : (
+                filteredInspections.map((inspection, index) => (
+                <Card 
+                  key={inspection.id} 
+                  className="hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg flex items-center space-x-2">
@@ -254,7 +350,7 @@ export const MyReports = ({ onBack }: MyReportsProps) => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )))}
             </TabsContent>
           </Tabs>
         </Container>

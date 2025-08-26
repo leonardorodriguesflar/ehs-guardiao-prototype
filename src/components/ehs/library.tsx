@@ -1,8 +1,10 @@
+import { useState, useMemo } from "react";
 import { Header, Container, Main } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -22,6 +24,10 @@ interface LibraryProps {
 }
 
 export const Library = ({ onBack }: LibraryProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [downloadingIds, setDownloadingIds] = useState<number[]>([]);
+  
   const documents = [
     {
       id: 1,
@@ -114,6 +120,38 @@ export const Library = ({ onBack }: LibraryProps) => {
     });
   };
 
+  const handleDownload = async (docId: number, title: string) => {
+    setDownloadingIds(prev => [...prev, docId]);
+    
+    try {
+      // Simulate download
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Create and download fake file (in real app, this would be actual file download)
+      const blob = new Blob([`Documento: ${title}\nConteúdo do documento...`], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingIds(prev => prev.filter(id => id !== docId));
+    }
+  };
+
+  // Filter documents
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           doc.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || doc.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [documents, searchTerm, selectedCategory]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header>
@@ -146,6 +184,8 @@ export const Library = ({ onBack }: LibraryProps) => {
               <Input 
                 placeholder="Buscar documentos..."
                 className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
@@ -154,11 +194,12 @@ export const Library = ({ onBack }: LibraryProps) => {
               {categories.map((category) => (
                 <Button
                   key={category.value}
-                  variant={category.value === "all" ? "default" : "outline"}
+                  variant={selectedCategory === category.value ? "default" : "outline"}
                   size="sm"
-                  className="h-8"
+                  className="h-8 transition-all hover:scale-105"
+                  onClick={() => setSelectedCategory(category.value)}
                 >
-                  {category.label} ({category.count})
+                  {category.label} ({selectedCategory === category.value ? filteredDocuments.length : category.count})
                 </Button>
               ))}
             </div>
@@ -166,8 +207,21 @@ export const Library = ({ onBack }: LibraryProps) => {
 
           {/* Document Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map((doc) => (
-              <Card key={doc.id} className="hover:shadow-elevated transition-all hover:-translate-y-1">
+            {filteredDocuments.length === 0 ? (
+              <div className="col-span-full">
+                <Card className="p-8 text-center animate-fade-in">
+                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum documento encontrado</h3>
+                  <p className="text-muted-foreground">Tente ajustar os filtros de busca.</p>
+                </Card>
+              </div>
+            ) : (
+              filteredDocuments.map((doc, index) => (
+              <Card 
+                key={doc.id} 
+                className="hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start space-x-3">
                     <div className={`p-2 rounded-lg ${doc.bgColor}`}>
@@ -194,16 +248,19 @@ export const Library = ({ onBack }: LibraryProps) => {
                     <span>Atualizado: {formatDate(doc.lastUpdated)}</span>
                   </div>
                   
-                  <Button 
+                  <EnhancedButton 
                     className="w-full bg-gradient-primary"
                     size="sm"
+                    onClick={() => handleDownload(doc.id, doc.title)}
+                    loading={downloadingIds.includes(doc.id)}
+                    loadingText="Baixando..."
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Baixar Documento
-                  </Button>
+                  </EnhancedButton>
                 </CardContent>
               </Card>
-            ))}
+            )))}
           </div>
 
           {/* Quick Access Section */}

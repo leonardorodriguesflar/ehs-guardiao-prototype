@@ -9,6 +9,7 @@ interface ModuleCardProps {
   onClick?: () => void;
   className?: string;
   variant?: "default" | "primary" | "warning" | "success";
+  style?: React.CSSProperties;
 }
 
 export const ModuleCard = ({ 
@@ -17,7 +18,8 @@ export const ModuleCard = ({
   icon: Icon, 
   onClick, 
   className,
-  variant = "default" 
+  variant = "default",
+  style
 }: ModuleCardProps) => {
   return (
     <Card 
@@ -30,6 +32,7 @@ export const ModuleCard = ({
         className
       )}
       onClick={onClick}
+      style={style}
     >
       {/* Background decoration with animated gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-all duration-500" />
